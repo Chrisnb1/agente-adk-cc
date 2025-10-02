@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     app_name: str = "multiagent-system"
 
     # RAG Configuration
-    documents_path: str = "data/documents"
+    documents_path: str = "src/data/documents"
     rag_enabled: bool = True
-    chroma_persist_directory: str = "data/chroma_db"
+    chroma_persist_directory: str = "src/data/chroma_db"
     chroma_collection_name: str = "documents"
 
     # Web Search Configuration
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     class Config:
         """Pydantic configuration."""
 
-        env_file = ".env"
+        env_file = "src/.env"
         env_file_encoding = "utf-8"
         case_sensitive = False
 
