@@ -1,0 +1,178 @@
+# Documentación del Sistema Multiagente
+
+## Introducción
+
+Este es un sistema multiagente construido con Google ADK (Agent Development Kit) que utiliza modelos locales de Ollama para proporcionar respuestas inteligentes a través de un agente orquestador y subagentes especializados.
+
+## Arquitectura
+
+El sistema se compone de tres agentes principales:
+
+1. **Orchestrator Agent**: Agente principal que recibe las consultas del usuario y decide si responder directamente o delegar a subagentes especializados.
+
+2. **RAG Agent**: Agente especializado en recuperación y análisis de documentos locales. Utiliza ChromaDB como base de datos vectorial y embeddings de Ollama (embeddinggemma) para búsqueda semántica.
+
+3. **Web Agent**: Agente con conocimiento general que puede responder preguntas sobre información web, aunque no tiene acceso directo a búsquedas en tiempo real.
+
+## Modelos Utilizados
+
+### LLM: gpt-oss:20b
+- Modelo de lenguaje de 20 mil millones de parámetros
+- Tamaño: aproximadamente 14GB
+- Context window: 128K tokens
+- Requiere GPU NVIDIA para funcionamiento óptimo
+- Soporta function calling y structured outputs
+
+### Embeddings: embeddinggemma
+- Modelo de embeddings de 300 millones de parámetros
+- Tamaño: aproximadamente 622MB
+- Context window: 2K tokens
+- Optimizado para deployment local
+- Utilizado para indexación de documentos en ChromaDB
+
+## Requisitos del Sistema
+
+### Hardware
+- GPU NVIDIA con compute capability 5.0 o superior
+- Mínimo 16GB de VRAM recomendado para gpt-oss:20b
+- Driver NVIDIA version 531 o superior
+- CUDA instalado y configurado
+
+### Software
+- Ollama instalado y corriendo (http://localhost:11434)
+- Python 3.10 o superior
+- UV package manager para gestión de dependencias
+- ChromaDB para almacenamiento vectorial
+
+## Configuración
+
+El sistema utiliza Pydantic Settings para gestión de configuración. Las principales variables son:
+
+- `OLLAMA_BASE_URL`: URL de la API de Ollama (default: http://localhost:11434)
+- `OLLAMA_LLM_MODEL`: Modelo LLM a utilizar (default: gpt-oss:20b)
+- `OLLAMA_EMBEDDING_MODEL`: Modelo de embeddings (default: embeddinggemma)
+- `REQUIRE_GPU`: Requerimiento obligatorio de GPU (default: True)
+- `CHROMA_PERSIST_DIRECTORY`: Directorio de persistencia de ChromaDB
+- `RAG_CORPUS_PATH`: Ruta al corpus de documentos para RAG
+
+## Flujo de Ejecución
+
+1. Usuario envía una consulta al sistema
+2. El Orchestrator Agent analiza la consulta
+3. Decide entre tres opciones:
+   - Responder directamente para preguntas generales
+   - Delegar al RAG Agent para preguntas sobre documentación local
+   - Delegar al Web Agent para preguntas sobre información web
+4. Si se delega, el subagente procesa la consulta y retorna la respuesta
+5. El Orchestrator retorna la respuesta final al usuario
+
+## Uso del Sistema
+
+### Instalación
+```bash
+# Clonar repositorio
+git clone <repository-url>
+
+# Instalar dependencias
+uv sync --all-extras
+
+# Configurar variables de entorno
+cp .env.example .env
+```
+
+### Ejecución
+```bash
+# Ejecutar el sistema
+uv run python src/main.py
+```
+
+### Testing
+```bash
+# Ejecutar tests unitarios
+uv run pytest src/tests/ -v
+
+# Linting y formateo
+uv run ruff check src/ --fix
+uv run ruff format src/
+
+# Type checking
+uv run mypy src/
+```
+
+## Manejo de Errores
+
+El sistema implementa manejo robusto de errores:
+
+- `GPUNotAvailableException`: GPU no disponible cuando es requerida
+- `OllamaNotRunningException`: Servicio Ollama no está corriendo
+- `ModelNotAvailableException`: Modelos requeridos no están descargados
+- `VectorStoreException`: Problemas con ChromaDB
+- `CorpusEmptyException`: No hay documentos indexados
+- `NoResultsException`: No se encontraron resultados relevantes
+
+## Mejores Prácticas
+
+1. **Indexación**: Indexar documentos una sola vez, verificar count antes de re-indexar
+2. **GPU**: Siempre verificar disponibilidad de GPU antes de iniciar
+3. **Modelos**: Asegurar que modelos estén descargados antes de ejecutar
+4. **Async**: Usar async/await consistentemente para operaciones I/O
+5. **Tests**: Mantener tests junto al código que prueban
+6. **Límites**: Archivos max 500 líneas, funciones max 50 líneas
+
+## Limitaciones Conocidas
+
+- Web Agent no tiene acceso real a búsquedas web en tiempo real (google_search solo funciona con Gemini)
+- InMemorySessionService no persiste sesiones (solo para desarrollo)
+- Primera ejecución puede ser lenta si modelos no están cargados en GPU
+- Requiere GPU obligatoriamente, no hay fallback a CPU
+
+## Escalabilidad
+
+El sistema está diseñado para ser extensible:
+- Agregar nuevos subagentes en `src/agent/sub_agents/`
+- Registrar como AgentTool en el orchestrator
+- Sin cambios necesarios en el core del sistema
+
+## Troubleshooting
+
+### GPU no detectada
+```bash
+# Verificar GPU
+nvidia-smi
+
+# Verificar CUDA
+nvcc --version
+```
+
+### Ollama no responde
+```bash
+# Verificar servicio Ollama
+curl http://localhost:11434
+
+# Listar modelos
+ollama list
+```
+
+### Modelos faltantes
+```bash
+# Descargar modelos
+ollama pull gpt-oss:20b
+ollama pull embeddinggemma
+```
+
+### ChromaDB problemas de permisos
+```bash
+# Verificar permisos del directorio
+ls -la data/chroma_db/
+
+# Recrear directorio si es necesario
+rm -rf data/chroma_db/
+mkdir -p data/chroma_db/
+```
+
+## Referencias
+
+- Google ADK: https://google.github.io/adk-docs/
+- Ollama: https://ollama.com
+- ChromaDB: https://www.trychroma.com/
+- LangChain: https://python.langchain.com/

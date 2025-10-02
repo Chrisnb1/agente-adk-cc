@@ -1,0 +1,28 @@
+Python Programming Guide
+
+Python is a high-level, interpreted programming language known for its simplicity and readability.
+
+Key Features:
+- Dynamic typing
+- Automatic memory management
+- Rich standard library
+- Support for multiple programming paradigms (OOP, functional, procedural)
+
+Basic Syntax:
+Variables are declared without type specification. Indentation is used for code blocks.
+
+Example:
+def greet(name):
+    return f"Hello, {name}!"
+
+Data Structures:
+- Lists: Ordered, mutable collections
+- Tuples: Ordered, immutable collections
+- Dictionaries: Key-value pairs
+- Sets: Unordered collections of unique elements
+
+Popular Use Cases:
+- Web development (Django, Flask)
+- Data science and machine learning (NumPy, Pandas, TensorFlow)
+- Automation and scripting
+- API development
